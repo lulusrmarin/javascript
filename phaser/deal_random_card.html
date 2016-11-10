@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<head>
+<script type="text/javascript" src="js/phaser.min.js"></script>
+</head>
+<body>
+<script>
+var game = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update });
+
+var gameWidth = 800;
+var gameHeight = 420;
+
+const CARDS_IN_SUIT = 13;
+const SUITS_IN_DECK = 4;
+
+function deal_card() {
+	game.add.text(32, 64, 'Card Dealt!', { fill: 'white' });
+    card = game.add.sprite(340, 300, random_card());
+	card.scale.setTo(0.25,0.25);
+}
+
+function load_deck() {
+	var suit_no = 0;
+	while(suit_no < SUITS_IN_DECK) {
+		if(suit_no == 0) {
+			var suit = 'Clubs';				
+		}
+		else if (suit_no == 1) {
+			var suit = 'Diamonds';				
+		}
+		else if (suit_no == 2) {
+			var suit = 'Hearts';				
+		}
+		else if (suit_no == 3) {
+			var suit = 'Spades';				
+		}
+	
+		var card_no = 1;
+		while (card_no <= CARDS_IN_SUIT) {
+			console.log(card_no)
+			if(card_no > 1 && card_no <= 10) {
+				var card = card_no;
+			}
+			else if(card_no > 10) {
+				if(card_no == 11) { var card = "jack"; }
+				if(card_no == 12) { var card = "queen"; }
+				if(card_no == 13) { var card = "king"; }
+			}
+			else if(card_no == 1) {
+				var card = 'ace';
+			}
+			console.log(card);
+			game.load.image(card + suit, 'cards/' + card + '_of_' + suit + '.png');
+			card_no++;
+		}
+		
+		console.log(suit_no);
+		suit_no++;
+	}
+	game.load.image("cardBack","cards/card_back.png")
+}
+
+function random_card() {
+	var randomOne = game.rnd.integerInRange(0,3);
+	var randomTwo = game.rnd.integerInRange(1,13);
+	
+	if(randomOne == 0) {
+		var suit = 'Clubs';				
+	}
+	else if (randomOne == 1) {
+		var suit = 'Diamonds';				
+	}
+	else if (randomOne == 2) {
+		var suit = 'Hearts';				
+	}
+	else if (randomOne == 3) {
+		var suit = 'Spades';				
+	}
+	
+	if(randomTwo > 1 && randomTwo <= 10) {
+		var card = randomTwo;
+	}
+	else if(randomTwo > 10) {
+		if(randomTwo == 11) { var card = "jack"; }
+		if(randomTwo == 12) { var card = "queen"; }
+		if(randomTwo == 13) { var card = "king"; }
+	}
+	else if(randomTwo == 1) {
+		var card = 'ace';
+	}	
+	
+	game.add.text(32, 96, card+suit, { fill: 'white' });
+	console.log(card+suit);
+	return card+suit;
+}
+
+////////////////////////
+
+function preload() {
+	load_deck();
+}
+
+function create() {
+	game.stage.backgroundColor = "2C5A1E";
+    card = game.add.sprite(340, 20, 'cardBack');
+	card.scale.setTo(0.25,0.25)
+	game.add.text(32, 32, 'Deal Card Demo', { fill: 'white' });
+
+	card.inputEnabled = true;
+	card.events.onInputDown.add(deal_card, this);
+}
+
+function update() {
+}
+</script>
