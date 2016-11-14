@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<head>
+<script type="text/javascript" src="js/phaser.min.js"></script>
+</head>
+<body>
+<script>
+var gameWidth = 800;
+var gameHeight = 500;
+
+var game = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update });
+
+const CARDS_IN_SUIT = 13;
+const SUITS_IN_DECK = 4;
+
+var cardWidth = 500;
+var scale = 0.25;
+var chipScale = 0.5;
+var circleScale = 0.3;
+var bet = 0;
+var bank = 50;
+
+var chipGroup;
+
+function deal_card() {
+	//game.add.text(32, 64, 'Card Dealt!', { fill: 'white' });
+	card = random_card();
+	//console.log(card[0] + card[1]);
+    card_sprite = game.add.sprite((gameWidth - cardWidth * scale) / 2, 300, card[0] + card[1]);
+	card_sprite.scale.setTo(scale,scale);
+}
+
+function return_card(suitVal,cardVal) {
+	var card = new Array();
+	if(suitVal == 0) { card[1] = 'Clubs'; }
+	else if (suitVal == 1) { card[1] = 'Diamonds'; }
+	else if (suitVal == 2) { card[1]= 'Hearts';	}
+	else if (suitVal == 3) { card[1] = 'Spades'; }
+	
+	if(cardVal > 1 && cardVal <= 10) { card[0] = cardVal; }
+	else if(cardVal > 10) {
+		if(cardVal == 11) { card[0] = "jack"; }
+		if(cardVal == 12) { card[0] = "queen"; }
+		if(cardVal == 13) { card[0] = "king"; }
+	}
+	else if(cardVal == 1) {	card[0] = 'ace'; }
+	
+	return card;
+}
+
+function load_deck() {
+	var suit_no = 0;
+	while(suit_no < SUITS_IN_DECK) {
+		var card_no = 1;
+		while (card_no <= CARDS_IN_SUIT) {
+			card = return_card(suit_no,card_no);
+			//console.log(card);
+			//console.log(card[0] + card[1]);
+			game.load.image(card[0] + card[1], 'cards/' + card[0] + '_of_' + card[1] + '.png');
+			//console.log('cards/' + card[0] + '_of_' + card[1] + '.png');
+			card_no++;
+		}
+		
+		//console.log(suit_no);
+		suit_no++;
+	}
+	game.load.image("cardBack","cards/card_back.png");
+	game.load.spritesheet("chips","chips/chips.png",120,120);
+	game.load.image("bettingCircle","table/circle.png");
+	game.load.image("betButton","buttons/place-bet.png");
+	game.load.image("cancelButton","buttons/cancel-button.png");
+	game.load.image("felt","table/felt.png");
+	// load sounds
+	game.load.audio("clink","sounds/clink.ogg");
+}
+
+function random_card() {
+	var randomOne = game.rnd.integerInRange(0,3);
+	var randomTwo = game.rnd.integerInRange(1,13);
+	// Get a random card from the numbers above.
+	card = return_card(randomOne,randomTwo);
+	//game.add.text(32, 96, card+suit, { fill: 'white' });
+	//console.log(card);
+	return card;
+}
+
+function bet_chip(value) {
+	// This is basically an Is-Set? function
+	// This is used to refresh the debug screen
+	if(typeof chipBet !== 'undefined') {
+		chipBet.destroy(); // Delete the last chip bet
+	}
+	// If it's a 1 chip
+	if(value == 0) {
+		chipBet = game.add.text(32, 64, "1 Chip Bet!", { fill: 'white' }); // Print a chip was bet
+		chipBet.scale.setTo(0.8,0.8);  // Change size
+		bet += 1;} // Increment.
+	// If it's a 5 chip
+	else if(value == 2) { // Etc...
+		chipBet = game.add.text(32, 64, "5 Chip Bet!", { fill: 'white' });
+		chipBet.scale.setTo(0.8,0.8); 
+		bet += 5;}	// Increment
+	var randomX = game.rnd.integerInRange((gameWidth - cardWidth * circleScale) / 2 + 80,(gameWidth - cardWidth * circleScale) / 2 + 200);
+	var randomY = game.rnd.integerInRange(250,440);
+	chip = game.add.sprite(randomX,randomY,'chips',value);
+	chip.scale.setTo(chipScale,chipScale);
+	chipGroup.add(chip);
+	
+	clink = game.add.audio("clink");
+	clink.play();
+	
+	betTxt.setText('Total Bet: ' + bet);
+}
+
+function kill_chips() {
+	bet = 0; // Set the total bet to 0
+	betTxt.setText('Total Bet: ' + bet); // Update the text accordingly
+	chipGroup.destroy(); // Destroy all chips visually in the betting circle
+	chipGroup = game.add.group(); // Create a new group of chips
+	// Also do these things after cancelled.
+	chip_1.input.enabled = true; 
+	chip_5.input.enabled = true;
+	chip_1.tint = 0xffffff;
+	chip_5.tint = 0xffffff;	
+}
+
+function bet_chips() {
+	bank = bank - bet; // Remove the old bet from the bank
+	bet = 0; // Set the total bet to 0
+	betTxt.setText('Total Bet: ' + bet); // Update the text accordingly
+	bankTxt.setText('Bank: ' + bank); // Update bank text
+	
+	// Disable to cancel button and make it LOOK disabled
+	button_cancel.tint = 0x666666;
+	button_cancel.input.enabled = false;
+	
+	// Also dim out the chips
+	chip_1.tint = 0x666666;
+	chip_1.input.enabled = false;
+	chip_5.tint = 0x666666;
+	chip_5.input.enabled = false;
+}
+
+////////////////////////
+////////////////////////
+
+
+function preload() {
+	load_deck();
+}
+
+function create() {
+	game.stage.backgroundColor = "2C5A1E";
+	background = game.add.tileSprite(0,0, gameWidth, gameHeight,"felt");
+	
+    card = game.add.sprite((gameWidth - cardWidth * scale) / 2 - 80, 20, 'cardBack');
+	card.scale.setTo(scale,scale);
+
+	circle = game.add.sprite((gameWidth - cardWidth * circleScale) / 2 + 100, 250, 'bettingCircle');
+	circle.scale.setTo(circleScale,circleScale);
+	
+	chip_1 = game.add.sprite(700,400,'chips',0);
+	chip_5 = game.add.sprite(660,400,'chips',2);
+	chip_1.scale.setTo(chipScale,chipScale);
+	chip_5.scale.setTo(chipScale,chipScale);
+	game.add.text(32, 32, 'Betting Demo', { fill: 'white' });	
+	betTxt = game.add.text(32, 96, 'Total Bet: 0', { fill: 'white' });
+	betTxt.scale.setTo(0.8,0.8);
+	bankTxt = game.add.text(32, 128, 'Bank: ' + bank, { fill: 'white' });
+	bankTxt.scale.setTo(0.8,0.8);
+
+	chip_1.inputEnabled = true;
+	chip_5.inputEnabled = true;	
+	//card.events.onInputDown.add(deal_card, this);
+	chip_1.events.onInputDown.add(function(){bet_chip(0)}, this);
+	chip_5.events.onInputDown.add(function(){bet_chip(2)}, this);
+	chipGroup = game.add.group();
+	
+	// Bet Button Features
+	button_bet = game.add.sprite(620,250,'betButton');
+	button_bet.scale.setTo(0.5,0.5);
+	button_bet.inputEnabled = true;
+	button_bet.events.onInputDown.add(bet_chips, this);
+	
+	// Cancel Button Features
+	button_cancel = game.add.sprite(620,300,'cancelButton');
+	button_cancel.scale.setTo(0.5,0.5);
+	button_cancel.inputEnabled = true;
+	button_cancel.events.onInputDown.add(kill_chips, this);
+}
+
+function update() {
+	if(bet == 0) {
+		button_bet.tint = 0x666666;
+		button_bet.input.enabled = false;
+	}
+	else {
+		button_bet.tint = 0xffffff;
+		button_bet.input.enabled = true;
+	}
+	if(bet > bank - 1) {
+		chip_1.tint = 0x666666;
+		chip_1.input.enabled = false;
+
+	}
+	if(bet > bank - 5) {
+		chip_5.tint = 0x666666;	
+		chip_5.input.enabled = false;
+	}
+}
+</script>
