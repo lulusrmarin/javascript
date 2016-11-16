@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<head>
+<script type="text/javascript" src="js/phaser.min.js"></script>
+</head>
+<body>
+<script>
+// ToDo:  Elevens.
+
+// Game Width and Height
+var gameWidth = 800;
+var gameHeight = 500;
+
+// Create a new game object, includes a canvas on page.
+var game = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update });
+
+// Constant's we're working with for this game/deck.
+const CARDS_IN_SUIT = 13;
+const SUITS_IN_DECK = 4;
+
+// Width of cards
+var cardWidth = 500;
+// Scale Vars
+var scale = 0.25; // Scale of cards
+var chipScale = 0.5; // Scale of chipScale
+var circleScale = 0.3; // Scale of Betting Circle
+var textScale = 0.6; // Scale of text
+
+// Set text prefs
+var textMargin = 10; 
+var textRowMargin = 20;
+var scoreMargin = 120;
+var scoreRow = 50;
+var statusTxtMargin = 500;
+var statusTxtRow = 110;
+var buttonMargin = 640;
+var buttonRow = 50;
+var cardMargin = 170;
+
+// Scores
+var dealerScore;
+var dealerTrueScore;
+var playerScore;
+var playerAcesScore = 0;
+var dealerAceScore;
+var playerAces = false;
+var acesOnly = false;
+
+// Initialize the bet and bank variables
+var bet = 0; // Bet initialized at zero
+var bank = 50; // Bank set to 50.
+
+// Initialize Hand Count
+var dealerHandCount = 1;
+var playerHandCount = 1;
+
+// Initialize chip group.  Done so we can remove them all at once.
+var chipGroup;
+var dealerCardGroup;
+var playerCardGroup;
+
+var statusTxt;
+
+function deal_card() {
+	//game.add.text(32, 64, 'Card Dealt!', { fill: 'white' });
+	card = random_card();
+	//console.log(card[0] + card[1]);
+    card_sprite = game.add.sprite((gameWidth - cardWidth * scale) / 2, 300, card[0] + card[1]);
+	card_sprite.scale.setTo(scale,scale);
+}
+
+function return_card(suitVal,cardVal) {
+	var card = new Array();
+	if(suitVal == 0) { card[1] = 'Clubs'; }
+	else if (suitVal == 1) { card[1] = 'Diamonds'; }
+	else if (suitVal == 2) { card[1]= 'Hearts';	}
+	else if (suitVal == 3) { card[1] = 'Spades'; }
+	
+	if(cardVal > 1 && cardVal <= 10) { card[0] = cardVal; }
+	else if(cardVal > 10) {
+		if(cardVal == 11) { card[0] = "jack"; }
+		if(cardVal == 12) { card[0] = "queen"; }
+		if(cardVal == 13) { card[0] = "king"; }
+	}
+	else if(cardVal == 1) {	card[0] = 'ace'; }
+	card[2] = cardVal;
+	
+	return card;
+}
+
+function load_deck() {
+	var suit_no = 0;
+	while(suit_no < SUITS_IN_DECK) {
+		var card_no = 1;
+		while (card_no <= CARDS_IN_SUIT) {
+			card = return_card(suit_no,card_no);
+			//console.log(card);
+			//console.log(card[0] + card[1]);
+			game.load.image(card[0] + card[1], 'cards/' + card[0] + '_of_' + card[1] + '.png');
+			//console.log('cards/' + card[0] + '_of_' + card[1] + '.png');
+			card_no++;
+		}
+		
+		//console.log(suit_no);
+		suit_no++;
+	}
+	game.load.image("cardBack","cards/card_back.png");
+	game.load.spritesheet("chips","chips/chips.png",120,120);
+	game.load.image("bettingCircle","table/circle.png");
+	game.load.image("betButton","buttons/place-bet.png");
+	game.load.image("cancelButton","buttons/cancel-button.png");
+	game.load.image("standButton","buttons/stand.png");
+	game.load.image("hitButton","buttons/hit.png");
+	game.load.image("doubleButton","buttons/double.png");
+	game.load.image("felt","table/felt.png");
+	// load sounds
+	game.load.audio("clink","sounds/clink.ogg");
+	game.load.audio("cancel","sounds/beep.wav");
+}
+
+function random_card() {
+	var randomOne = game.rnd.integerInRange(0,3);
+	var randomTwo = game.rnd.integerInRange(1,13);
+	// Get a random card from the numbers above.
+	card = return_card(randomOne,randomTwo);
+	//game.add.text(32, 96, card+suit, { fill: 'white' });
+	//console.log(card);
+	return card;
+}
+
+function bet_chip(value) {
+	// This is basically an Is-Set? function
+	// This is used to refresh the debug screen
+	if(typeof chipBet !== 'undefined') {
+		chipBet.destroy(); // Delete the last chip bet
+	}
+	// If it's a 1 chip
+	if(value == 0) {
+		chipBet = game.add.text(textMargin, textRowMargin * 2, "1 Chip Bet!", { fill: 'white' }); // Print a chip was bet
+		chipBet.scale.setTo(textScale,textScale);  // Change size
+		bet += 1;} // Increment.
+	// If it's a 5 chip
+	else if(value == 2) { // Etc...
+		chipBet = game.add.text(textMargin, textRowMargin * 2, "5 Chip Bet!", { fill: 'white' });
+		chipBet.scale.setTo(textScale,textScale); 
+		bet += 5;}	// Increment
+	var randomX = game.rnd.integerInRange((gameWidth - cardWidth * circleScale) / 2 + 80,(gameWidth - cardWidth * circleScale) / 2 + 200);
+	var randomY = game.rnd.integerInRange(240,430);
+	chip = game.add.sprite(randomX,randomY,'chips',value);
+	chip.scale.setTo(chipScale,chipScale);
+	chipGroup.add(chip);
+	
+	clink = game.add.audio("clink");
+	clink.play();
+	
+	betTxt.setText('Total Bet: ' + bet);
+	button_cancel.tint = 0xffffff;
+	button_cancel.input.enabled = true;
+}
+
+function kill_chips() {
+	bet = 0; // Set the total bet to 0
+	betTxt.setText('Total Bet: ' + bet); // Update the text accordingly
+	chipGroup.destroy(); // Destroy all chips visually in the betting circle
+	chipGroup = game.add.group(); // Create a new group of chips
+	// Also do these things after cancelled.
+	chip_1.input.enabled = true; 
+	chip_5.input.enabled = true;
+	chip_1.visible = true;
+	chip_5.visible = true;	
+	
+	cancel = game.add.audio("cancel");
+	cancel.play();
+}
+
+function cap_card(r) {
+	if(r[0] == "jack" || r[0] == "queen" || r[0] == "king") {
+		console.log("True value: 10");
+		return 10;
+	}
+	else if (r[0] == "ace") {
+		console.log("True value: 11");
+		return 11;
+	}
+	else {
+		console.log("True value: " + r[2]);
+		return r[2];
+	}
+}
+
+function blackjack_check(dealerscore,dealerTrueScore,playerScore) {
+	// Check for an initial win condition
+	if(dealerTrueScore == 21 && playerScore == 21) {
+		//console.log("Push");
+		statusTxt.setText('Push!');
+		dealer_card_1.loadTexture(dealerCardVal1[0]+dealerCardVal1[1]);
+		bank += bet;
+		bankTxt.setText('Bank: ' + bank);
+		bet = 0;
+		betTxt.setText('Bet: ' + bank);		
+		chipGroup.destroy()
+		chipGroup = game.add.group();
+		undraw_hit_stand();
+		dScoreTxt.setText(dealerTrueScore);
+	}
+	else if(dealerTrueScore == 21) {
+		//console.log("Dealer Wins");
+		statusTxt.setText('Dealer Wins - Blackjack!');
+		bank -= bet;
+		bankTxt.setText('Bank: ' + bank);
+		dealer_card_1.loadTexture(dealerCardVal1[0]+dealerCardVal1[1]);
+		bet = 0;
+		betTxt.setText('Bet: ' + bank);
+		chipGroup.destroy();
+		chipGroup = game.add.group();
+		undraw_hit_stand();
+		dScoreTxt.setText(dealerTrueScore);
+	} 
+	else if(playerScore == 21) {
+		//console.log("Blackjack");
+		statusTxt.setText('Blackjack! 1.5x Winnings!');
+		bank += bet * 2.5;
+		bankTxt.setText('Bank: ' + bank);
+		dealer_card_1.loadTexture(dealerCardVal1[0]+dealerCardVal1[1]);
+		bet = 0;
+		betTxt.setText('Bet: ' + bank);		
+		chipGroup.destroy();
+		chipGroup = game.add.group();
+		undraw_hit_stand();
+		dScoreTxt.setText(dealerTrueScore);
+	}
+	else {
+		draw_hit_stand();
+	}
+}
+
+function deal_hand() {
+	// Typical debug shit
+	dealTxt = game.add.text(textMargin, textRowMargin * 5, 'Hand dealt!', { fill: 'white' });
+	dealTxt.scale.setTo(textScale,textScale);
+	acesOnly = false;
+	playerScore = 0;
+	playerAces = false;
+	playerAcesScore = 0;
+	dealerScore = 0;	
+	
+	// Remove cards if new hand
+	if(typeof dealerCardGroup !== 'undefined') {
+		dealerCardGroup.destroy();
+		playerCardGroup.destroy();
+		dScoreTxt.destroy();
+		pScoreTxt.destroy();
+		playerHandCount = 1;
+		dealerHandCount = 1;
+	}	
+	
+	// Create Sprite Group of Cards:
+	dealerCardGroup = game.add.group();
+	playerCardGroup = game.add.group();
+	
+	// Generate player and dealer cards
+	dealerCardVal1 = random_card();
+	dealerCardVal2 = random_card();
+	playerCardVal1 = random_card();
+	playerCardVal2 = random_card();	
+	
+	// Draw Dealer's cards
+	dealer_card_1 = game.add.sprite(cardMargin, 15, 'cardBack');
+	dealer_card_1.scale.setTo(scale,scale);
+	dealer_card_2 = game.add.sprite(cardMargin + 30, 15, dealerCardVal2[0]+dealerCardVal2[1]);
+	dealer_card_2.scale.setTo(scale,scale);
+	// Add to sprite group
+	dealerCardGroup.add(dealer_card_1);
+	dealerCardGroup.add(dealer_card_2);
+	
+	// Draw Player's cards
+	player_card_1 = game.add.sprite(cardMargin, 270, playerCardVal1[0]+playerCardVal1[1]);
+	player_card_1.scale.setTo(scale,scale);
+	player_card_2 = game.add.sprite(cardMargin + 30, 270, playerCardVal2[0]+playerCardVal2[1]);
+	player_card_2.scale.setTo(scale,scale);	
+	// Add to sprite group so we can delete at once
+	playerCardGroup.add(player_card_1);
+	playerCardGroup.add(player_card_2);
+	
+	// Turn cards into 10's and 11's accordingly.
+	dealerCardVal1[2] = cap_card(dealerCardVal1);
+	dealerCardVal2[2] = cap_card(dealerCardVal2);
+	playerCardVal1[2] = cap_card(playerCardVal1);
+	playerCardVal2[2] = cap_card(playerCardVal2);
+	
+	// Tally them up as well.
+	dealerScore = dealerCardVal2[2];
+	dealerTrueScore = dealerCardVal1[2] + dealerCardVal2[2];
+	console.log("dealer score: " + dealerScore);
+	console.log("dealer true score: " + dealerTrueScore);
+	
+	playerScore = playerCardVal1[2] + playerCardVal2[2];
+	// Special cases for aces
+	if(playerCardVal1[2] + playerCardVal2[2] == 21) {
+		pScoreTxt = game.add.text(scoreMargin, scoreRow * 7, playerScore, { fill: 'white' });
+	}
+	else if(playerCardVal1[0] == "ace") {
+		playerAcesScore = 1 + playerCardVal2[2];
+		pScoreTxt = game.add.text(scoreMargin -15, scoreRow * 7, playerAcesScore + "," + playerScore, { fill: 'white' });
+		playerAces = true;
+	}
+	else if(playerCardVal2[0] == "ace") {
+		playerAcesScore = playerCardVal1[2] + 1;
+		pScoreTxt = game.add.text(scoreMargin -15, scoreRow * 7, playerAcesScore + "," + playerScore, { fill: 'white' });
+		playerAces = true;
+	}
+	else {
+		pScoreTxt = game.add.text(scoreMargin, scoreRow * 7, playerScore, { fill: 'white' });
+	}
+	if(playerAcesScore > 21) {
+		pScoreTxt.setText(playerAcesScore);
+		acesOnly == true;
+	}
+	dScoreTxt = game.add.text(scoreMargin, scoreRow * 2, dealerScore, { fill: 'white' });
+	blackjack_check(dealerScore,dealerTrueScore,playerScore);
+	chipGroup.destroy();
+	chipGroup = game.add.group();
+}
+
+function draw_hit_stand() {
+	// Remove Bet Betton
+	button_bet.input.enabled = false;
+	button_bet.visible = false;
+
+	// Draw Hit Button
+	button_hit = game.add.sprite(buttonMargin,buttonRow * 3,'hitButton');
+	button_hit.scale.setTo(0.5,0.5);
+	button_hit.inputEnabled = true;
+	button_hit.events.onInputDown.add(function(){playerScore = hit(playerScore,dealerScore,dealerTrueScore,false);}, this);
+	
+	// Draw Stand Button
+	button_stand = game.add.sprite(buttonMargin,buttonRow * 4,'standButton');
+	button_stand.scale.setTo(0.5,0.5);
+	button_stand.inputEnabled = true;
+	button_stand.events.onInputDown.add(function(){dealerScore = stand(playerScore,dealerScore,dealerTrueScore);}, this);
+	
+	// Draw Double Down Button
+	if( bank >= bet ) {
+		button_double = game.add.sprite(buttonMargin,buttonRow * 2,'doubleButton');
+		button_double.scale.setTo(0.5,0.5);
+		button_double.inputEnabled = true;
+		button_double.events.onInputDown.add(function(){playerScore = hit(playerScore,dealerScore,dealerTrueScore,true);}, this);	
+	}
+}
+
+function undraw_double() {
+	// Remove Double Button
+	button_double.input.enabled = false;
+	button_double.visible = false;
+}
+
+function undraw_hit_stand() {
+	// Draw Bet Betton
+	button_bet.visible = true;
+
+	// Remove Hit Button
+	button_hit.input.enabled = false;	
+	button_hit.visible = false;
+	
+	// Remove Stand Button
+	button_stand.input.enabled = false;	
+	button_stand.visible = false;
+	
+	undraw_double();
+}
+
+function bet_chips() {
+	bank = bank - bet; // Remove the old bet from the bank
+	betTxt.setText('Total Bet: ' + bet); // Update the text accordingly
+	bankTxt.setText('Bank: ' + bank); // Update bank text
+	statusTxt.setText(''); // Clear text for status
+	
+	// Disable to cancel button and make it LOOK disabled
+	button_cancel.tint = 0x666666;
+	button_cancel.input.enabled = false;
+	
+	chipGroup.forEach(function(item){item.tint = 0x666666;}, this);
+	
+	deal_hand();
+}
+
+function stand(playerScore,dealerScore,dealerTrueScore) {
+	console.log(dealerTrueScore);
+	dealer_card_1.loadTexture(dealerCardVal1[0]+dealerCardVal1[1]);
+	chipGroup.forEach(function(item){item.tint = 0x666666;}, this);
+	while(dealerTrueScore < 17) {
+		dealerHandCount++;
+		new_dealer_card = random_card();
+		new_dealer_card[2] = cap_card(new_dealer_card);
+		new_dealer_card_sprite = game.add.sprite(cardMargin + dealerHandCount * 30, 15, new_dealer_card[0]+new_dealer_card[1]);
+		new_dealer_card_sprite.scale.setTo(scale,scale);
+		dealerCardGroup.add(new_dealer_card_sprite);
+		dealerScore += new_dealer_card[2];
+		dealerTrueScore += new_dealer_card[2];
+	}
+	dScoreTxt.setText(dealerTrueScore); // Update the text accordingly
+	win_check(dealerTrueScore,playerScore);
+	undraw_hit_stand();
+	return dealerTrueScore;
+}
+
+function hit(playerScore,dealerScore,dealerTrueScore,doubleDown = false) {
+	if(doubleDown == true) { 
+		bank -= bet;
+		bet *= 2; 
+		betTxt.setText('Total Bet: ' + bet);
+		bankTxt.setText('Bank: ' + bank);
+		clink.play();
+	}
+	playerHandCount++; // Increase this count to deal the card one more card margin over
+	//console.log(playerScore); // Debug
+	chipGroup.forEach(function(item){item.tint = 0x666666;}, this); // Dim out all bet chips
+	new_player_card = random_card(); // Create a new card value
+	new_player_card[2] = cap_card(new_player_card); // Turn face cards and aces into 10/11/1.
+	new_player_card_sprite = game.add.sprite(cardMargin + playerHandCount * 30, 270, new_player_card[0]+new_player_card[1]);
+	new_player_card_sprite.scale.setTo(scale,scale);
+	playerCardGroup.add(new_player_card_sprite);
+	
+	// For Aces
+	// For Regular Hits
+	if(doubleDown == true) {
+		if(new_player_card[0] == "ace") {
+			playerAces = true;
+			playerAcesScore = playerScore + 1;
+			playerScore += 11;
+			stand(playerScore,dealerScore,dealerTrueScore);
+		}
+		else {
+			playerScore += new_player_card[2];
+			playerAcesScore += new_player_card[2];
+			stand(playerScore,dealerScore,dealerTrueScore);
+		}	
+	}
+	else {
+		if(new_player_card[0] == "ace") {
+			playerAces = true;
+			playerAcesScore = playerScore + 1;
+			playerScore += 11;
+		}
+		else {
+			playerScore += new_player_card[2];
+			playerAcesScore += new_player_card[2];
+		}
+	}
+	
+	if(playerScore > 21 && playerAces == true) { acesOnly = true; }
+	if(playerAces == true && acesOnly == false) {
+		pScoreTxt.setText(playerAcesScore + "," + playerScore);
+	}
+	else if(acesOnly == true ) { pScoreTxt.setText(playerAcesScore); }
+	else { pScoreTxt.setText(playerScore); }
+	
+	if( ( playerScore > 21 && playerAces == false ) || ( playerAcesScore >= 21 && playerAces == true ) ) {
+		dealerTrueScore = stand(playerScore,dealerScore,dealerTrueScore);
+		console.log(playerScore);
+		console.log(dealerTrueScore);
+	}
+	
+	if(playerScore == 21) {
+		stand(playerScore,dealerScore,dealerTrueScore);
+		undraw_hit_stand();
+	}
+	else if(playerAcesScore == 21) {
+		stand(playerScore,dealerScore,dealerTrueScore);
+		undraw_hit_stand();
+	}
+	undraw_double();
+	return playerScore;
+}
+
+function win(s = "Win!") {
+	statusTxt.setText("Win!");
+	bank += bet * 2;
+	bankTxt.setText('Bank: ' + bank);
+	bet = 0;
+	chipGroup.destroy();
+	chipGroup = game.add.group();
+}
+
+function push(s = "Push!",doubleDown = false) {
+	statusTxt.setText("Push!");
+	bank += bet;
+	bankTxt.setText('Bank: ' + bank);
+	bet = 0;
+	chipGroup.destroy();
+	chipGroup = game.add.group();
+}
+
+function win_check(dealerTrueScore,playerScore) {
+	// 1 2 3
+	// Conditions
+	if( (dealerTrueScore > 21 && playerScore <22) || (playerScore < 22 && playerScore > dealerTrueScore && playerScore != dealerTrueScore ) && ( playerScore < 22 && dealerTrueScore < 22 ) ) {
+		win();
+	}
+	// Bust conditions.
+	// 1.  If the dealer score is equal to the player score.
+	// 2.  If both have busted.
+	else if(dealerTrueScore == playerScore || (playerScore > 21 && dealerTrueScore > 21)) {
+		push();
+	}
+	// Everything else is a lose.
+	else {
+		statusTxt.setText("Lose!");
+		//bank -= bet * 2; Already deducted
+		bankTxt.setText('Bank: ' + bank);
+		bet = 0;
+		chipGroup.destroy();
+		chipGroup = game.add.group();
+	}
+}
+
+////////////////////////
+////////////////////////
+
+
+function preload() {
+	load_deck();
+}
+
+function create() {
+	game.stage.backgroundColor = "2C5A1E";
+	background = game.add.tileSprite(0,0, gameWidth, gameHeight,"felt");
+	
+    //card = game.add.sprite((gameWidth - cardWidth * scale) / 2 - 80, 15, 'cardBack');
+	//card.scale.setTo(scale,scale);
+
+	circle = game.add.sprite((gameWidth - cardWidth * circleScale) / 2 + 115, 250, 'bettingCircle');
+	circle.scale.setTo(circleScale,circleScale);
+	
+	chip_1 = game.add.sprite(700,400,'chips',0);
+	chip_5 = game.add.sprite(660,400,'chips',2);
+	chip_1.scale.setTo(chipScale,chipScale);
+	chip_5.scale.setTo(chipScale,chipScale);
+	nameTxt = game.add.text(textMargin, textRowMargin, 'Blackjack Demo', { fill: 'white' });	
+	nameTxt.scale.setTo(textScale + 0.1,textScale + 0.1);
+	betTxt = game.add.text(textMargin, textRowMargin * 3, 'Total Bet: 0', { fill: 'white' });
+	betTxt.scale.setTo(textScale,textScale);
+	bankTxt = game.add.text(textMargin, textRowMargin * 4, 'Bank: ' + bank, { fill: 'white' });
+	bankTxt.scale.setTo(textScale,textScale);
+	statusTxt = game.add.text(statusTxtMargin, statusTxtRow, "", { fill: 'white' });
+	
+	chip_1.inputEnabled = true;
+	chip_5.inputEnabled = true;	
+	//card.events.onInputDown.add(deal_card, this);
+	chip_1.events.onInputDown.add(function(){bet_chip(0)}, this);
+	chip_5.events.onInputDown.add(function(){bet_chip(2)}, this);
+	chipGroup = game.add.group();
+	
+	// Bet Button Features
+	button_bet = game.add.sprite(buttonMargin,buttonRow * 5,'betButton');
+	button_bet.scale.setTo(0.5,0.5);
+	button_bet.inputEnabled = true;
+	button_bet.events.onInputDown.add(bet_chips, this);
+	
+	// Cancel Button Features
+	button_cancel = game.add.sprite(buttonMargin,buttonRow * 6,'cancelButton');
+	button_cancel.scale.setTo(0.5,0.5);
+	button_cancel.inputEnabled = true;
+	button_cancel.events.onInputDown.add(kill_chips, this);
+}
+
+function update() {
+	if(bet == 0) {
+		button_bet.tint = 0x666666;
+		button_bet.input.enabled = false;
+	}
+	else {
+		button_bet.tint = 0xffffff;
+		button_bet.input.enabled = true;
+	}
+	if(bet > bank - 1) {
+		chip_1.visible = false;
+		chip_1.input.enabled = false;
+	}
+	else {
+		chip_1.visible = true;
+		chip_1.input.enabled = true;
+	}
+	if(bet > bank - 5) {
+		chip_5.visible = false;
+		chip_5.input.enabled = false;
+	}
+		else {
+		chip_5.visible = true;
+		chip_5.input.enabled = true;
+	}
+}
+</script>
