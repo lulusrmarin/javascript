@@ -3,4 +3,6 @@
 
 - __google-oauth-2-login-button.js__ - The client half of the Ouath2 workflow for Google.  There is an ability to do this with pure javascript but it requires exposing your API key and Secret, which I'm not a fan of.  A more conservative way to do this would be to use Node or PHP.  I have a solution to each which will probably be uploaded at some point.  Once logged in, should display username, google image avatar and logout button.  Will definitely log you out, but if storing information in session that will need to be manually unset too (which is also something this component will do on logout)
 
+- __dropdown.js__ - Dropdown/select option component that takes an array of options and emits the option as a value.  This is similar to navigation.js on behavior, and may need to be extended a similar way depending on your use case
+
 Facebook buttons should be here sooner than later as well
