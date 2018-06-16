@@ -7,4 +7,6 @@
 
 - __search.js__ - Uses font awesome and bootstrap and creates a search field which automatically emits to a root component what was searched for on enter keydown, could probably be extended to take a prop or option that allows for a click-able button as well.
 
+- __pagination.js__ - Uses  Bootstrap4 pagination combined with Vue.js component.  Currently the component only takes one prop, which is a number of total items.  There is internal data such as the current page, results per page default, available results per page, and the range (being how many pages should be padding before or after the current page in the element.  These would stand to be better  used as props so they can live individually on each instance of the component.
+
 Facebook buttons should be here sooner than later as well
