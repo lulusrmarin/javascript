@@ -1,8 +1,7 @@
 Vue.component('pagination',{
-    props: [ 'total' ],
+    props: [ 'total', 'page' ],
     data: function() {
         return {
-            currentPage: 1,
             resultsPerPage:  25,
             resultsOptions: [ 25, 50, 75, 100 ],
             range: 2
@@ -10,12 +9,15 @@ Vue.component('pagination',{
     },
     computed: {
         maxPage: function() {
-            return Math.ceil( this.total / this.resultsPerPage );
+            return Math.ceil( this.total / this.resultsPerPage )
         },
         displaying: function() {
             return "Displaying " + (this.currentPage - 1) * this.resultsPerPage + " - " +
                 parseInt( ( this.currentPage * this.resultsPerPage ) > this.total ? this.total : ( this.currentPage * this.resultsPerPage ) ) +
                 " of " + this.total + " videos";
+        },
+        currentPage: function() {
+            return this.page;
         }
     },
     methods: {
