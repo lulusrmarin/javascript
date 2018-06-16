@@ -10,7 +10,7 @@ Vue.component('pagination',{
     },
     computed: {
         maxPage: function() {
-            return this.total / this.resultsPerPage
+            return Math.ceil( this.total / this.resultsPerPage );
         },
         displaying: function() {
             return "Displaying " + (this.currentPage - 1) * this.resultsPerPage + " - " +
