@@ -21,6 +21,7 @@ Vue.component('pagination',{
     methods: {
         loadPage: function( pg ) {
             this.currentPage = pg;
+            this.$emit( 'page', pg );
         },
         resetPage: function() {
             this.currentPage = 1;
