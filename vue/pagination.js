@@ -25,7 +25,10 @@ Vue.component('pagination',{
         },
         resetPage: function() {
             this.currentPage = 1;
-        }
+        },
+        prevPage: function( i ) {
+            return this.currentPage - this.range + i - 1 > 0 ? this.currentPage - this.range + i - 1 : 1
+        }        
     },
     template: `
         <div class="row">
@@ -36,7 +39,7 @@ Vue.component('pagination',{
                     <li class="page-item"><a class="page-link" href="#" @click="loadPage( currentPage - 1 )" v-if="currentPage > 1">Prev</a></li>
 
                     <li class="page-item" v-for="i in range">
-                        <a class="page-link" href="#" @click="loadPage( currentPage - range + i - 1 )" v-if="currentPage > i">{{currentPage - range + i - 1 > 0 ? currentPage - range + i - 1 : 1 }}</a>
+                        <a class="page-link" href="#" @click="loadPage( prevPage(i) )" v-if="currentPage > i">{{prevPage(i)}}</a>
                     </li>                                  
 
                     <li class="page-item"><a class="page-link">{{currentPage}}</a></li>
