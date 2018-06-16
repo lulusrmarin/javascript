@@ -5,7 +5,7 @@ Vue.component('pagination',{
             currentPage: 1,
             resultsPerPage:  25,
             resultsOptions: [ 25, 50, 75, 100 ],
-            range: 3
+            range: 2
         }
     },
     computed: {
@@ -36,8 +36,7 @@ Vue.component('pagination',{
                     <li class="page-item"><a class="page-link" href="#" @click="loadPage( currentPage - 1 )" v-if="currentPage > 1">Prev</a></li>
 
                     <li class="page-item" v-for="i in range">
-                        <a class="page-link" href="#" @click="loadPage( currentPage + i - range - 1 )" v-if="currentPage > i
-                            && currentPage + i - range - 1 != 0">{{currentPage + i - range - 1}}</a>
+                        <a class="page-link" href="#" @click="loadPage( currentPage - range + i - 1 )" v-if="currentPage > i">{{currentPage - range + i - 1 > 0 ? currentPage - range + i - 1 : 1 }}</a>
                     </li>                                  
 
                     <li class="page-item"><a class="page-link">{{currentPage}}</a></li>
