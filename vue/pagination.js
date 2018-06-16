@@ -16,8 +16,13 @@ Vue.component('pagination',{
                 parseInt( ( this.currentPage * this.resultsPerPage ) > this.total ? this.total : ( this.currentPage * this.resultsPerPage ) ) +
                 " of " + this.total + " videos";
         },
-        currentPage: function() {
-            return this.page;
+        currentPage:  {
+            get: function() {
+                return this.page;
+            },
+            set: function() {
+                return this.page;
+            }
         }
     },
     methods: {
