@@ -5,6 +5,6 @@
 
 - __dropdown.js__ - Dropdown/select option component that takes an array of options and emits the option as a value.  This is similar to navigation.js on behavior, and may need to be extended a similar way depending on your use case
 
-__search.js__ - Uses font awesome and bootstrap and creates a search field which automatically emits to a root component what was searched for on enter keydown, could probably be extended to take a prop or option that allows for a click-able button as well.
+- __search.js__ - Uses font awesome and bootstrap and creates a search field which automatically emits to a root component what was searched for on enter keydown, could probably be extended to take a prop or option that allows for a click-able button as well.
 
 Facebook buttons should be here sooner than later as well
