@@ -36,8 +36,9 @@ Vue.component('pagination',{
                     <li class="page-item"><a class="page-link" href="#" @click="loadPage( currentPage - 1 )" v-if="currentPage > 1">Prev</a></li>
 
                     <li class="page-item" v-for="i in range">
-                        <a class="page-link" href="#" @click="loadPage( currentPage - i )" v-if="currentPage > i">{{currentPage - i}}</a>
-                    </li>                             
+                        <a class="page-link" href="#" @click="loadPage( currentPage + i - range - 1 )" v-if="currentPage > i
+                            && currentPage + i - range - 1 != 0">{{currentPage + i - range - 1}}</a>
+                    </li>                                  
 
                     <li class="page-item"><a class="page-link">{{currentPage}}</a></li>
 
