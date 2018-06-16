@@ -2,7 +2,7 @@ Vue.component('pagination',{
     props: [ 'total', 'page' ],
     data: function() {
         return {
-            resultsPerPage:  25,
+            resultsPerPage: 25,
             resultsOptions: [ 25, 50, 75, 100 ],
             range: 2
         }
@@ -35,7 +35,10 @@ Vue.component('pagination',{
         },
         prevPage: function( i ) {
             return this.currentPage - this.range + i - 1 > 0 ? this.currentPage - this.range + i - 1 : 1
-        }        
+        },
+        setResults: function( i ) {
+            this.resultsPerPage = i;
+        }
     },
     template: `
         <div class="row">
@@ -67,9 +70,7 @@ Vue.component('pagination',{
                 <div class="row">
                     <div class="col align-bottom text-right">Results Per Page:</div>
                     <div class="col">
-                        <select class="form-control" v-model="resultsPerPage" @change="resetPage()">
-                            <option v-for="option in resultsOptions">{{option}}</option>
-                        </select>        
+                        <dropdown :data="resultsOptions" @select="setResults" name="Results Per Page"></dropdown>
                     </div>
                 </div>
             </div>
