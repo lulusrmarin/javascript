@@ -13,6 +13,7 @@ Vue.component('google-login',{
                 if( response.userProfile ) {
                     this.authed = true;
                     this.profile = response.userProfile
+                    this.emitProfile();
                 }
             }, 'json' );     
         },
