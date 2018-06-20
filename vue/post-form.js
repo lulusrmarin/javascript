@@ -1,3 +1,5 @@
+// post-form takes a google profile as a property and constructs
+// a preview post with it
 Vue.component( 'post-form', {
     props: [ 'profile' ],
     data: function(){
@@ -13,7 +15,7 @@ Vue.component( 'post-form', {
                 body: this.body
             }
 
-            $.post( 'index.php' {threadPost: post}, function( response ){
+            $.post( 'cars.php', {threadPost: post}, function( response ){
                 console.log( response );
             });
         }
@@ -30,11 +32,11 @@ Vue.component( 'post-form', {
             <hr>
 
             <div class="container-fluid">
-                <input type="text" class="form-control" v-model="title">
+                <input type="text" class="form-control" v-model="title" placeholder="Title">
             </div>
 
             <div class="container-fluid">
-                <textarea class="form-control" v-model="body"></textarea>
+                <textarea class="form-control" v-model="body" placeholder="Body"></textarea>
             </div>
 
             <div class="container-fluid">
