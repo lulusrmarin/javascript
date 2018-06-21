@@ -10,5 +10,7 @@
 - __pagination.js__ - Uses  Bootstrap4 pagination combined with Vue.js component.  Currently the component only takes one prop, which is a number of total items.  There is internal data such as the current page, results per page default, available results per page, and the range (being how many pages should be padding before or after the current page in the element.  These would stand to be better  used as props so they can live individually on each instance of the component.  *Requires dropdown.js and search.js.*
 
  - __post-form.js__ - Posts a title and body to a server side listener somewhere using jquery post
-
-Facebook buttons should be here sooner than later as well
+ 
+ - __thread.js__ - Loads a thread of posts from server side using post information.  Works in conjunction with GET url request to load a necessary number of posts.  Takes a property of a thread ID and sends that in a GET request
+ 
+ - __post.js__ - Posts a title and body to a server side listener somewhere using jquery post.  Requires a text, body, timestamp, image, and displayName to work correctly.
