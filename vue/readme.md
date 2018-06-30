@@ -14,3 +14,5 @@
  - __thread.js__ - Loads a thread of posts from server side using post information.  Works in conjunction with GET url request to load a necessary number of posts.  Takes a property of a thread ID and sends that in a GET request
  
  - __post.js__ - Posts a title and body to a server side listener somewhere using jquery post.  Requires a text, body, timestamp, image, and displayName to work correctly.
+
+- __rich-text.js__ - Requires SCEditor.  Rich text editor SCEditor in bbcode format whic emits values on lifecycle destroy and sets text through a prop on mount.  Very handy for a rich text/preview component I'm working on
