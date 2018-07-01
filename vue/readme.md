@@ -16,3 +16,5 @@
  - __post.js__ - Posts a title and body to a server side listener somewhere using jquery post.  Requires a text, body, timestamp, image, and displayName to work correctly.
 
 - __rich-text.js__ - Requires SCEditor.  Rich text editor SCEditor in bbcode format whic emits values on lifecycle destroy and sets text through a prop on mount.  Very handy for a rich text/preview component I'm working on
+
+- __tree.js__ - Meant to be used with a file explorer api of some kind.  Creates a recursive expandable/collapsable file tree in js
