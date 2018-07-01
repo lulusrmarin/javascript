@@ -21,8 +21,8 @@ methods: {
         Vue.set( this.expanded, path, false );
         Vue.set( this.node, path, null );
     },
-    emit; function( action, path ) {
-        $this.emit( action, path );
+    emit: function( action, path ) {
+        this.$emit( action, path );
     }
 },
 mounted: function() {
